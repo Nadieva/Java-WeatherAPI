@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <meta charset="UTF-8" content="text/html" http-equiv="Content-Type">
+    <link rel="stylesheet" th:href="@{/css/style.css}" type="text/css"/>
+    <title>Weather forecast application</title>
+</head>
+<body>
+<div class="flex-container"><h4>Welcome - Please complete the form</h4></div>
+<form method="post" th:action="@{/cities/form}" th:object="${cityForm}">
+    <div class="flex-container">
+        <p th:if="${isCityNameNull}" class="error">City name is not found</p>
+        <label for="cityName">City:</label>
+        <input id="cityName" name="cityName" placeholder="City name" type="text" required/>
+    </div>
+    <div class="flex-container">
+        <p th:if="${isCountryNameNull}" class="error">Country name is not found</p>
+        <label for="country">Country:</label>
+        <input id="country" name="country" placeholder="Country name" type="text" required/>
+    </div>
+    <br/>
+    <div class="flex-container">
+        <input type="submit" value="Search"/> <input type="reset" value="Reset"/>
+    </div>
+
+</form>
+
+</body>
+</html>

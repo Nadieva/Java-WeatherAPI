@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <meta charset="UTF-8" content="text/html" http-equiv="Content-Type">
+    <link rel="stylesheet" th:href="@{/css/style.css}" type="text/css"/>
+    <title>Weather forecast application</title>
+</head>
+<body>
+    <div>
+        <div><h4>Result(s):</h4></div>
+
+        <div>
+            <p th:if="${hasNoForecast}" class="error">Sorry, no weather forecasts found</p>
+        </div>
+        <div>
+            <p>Weather forecast for another city</p>
+            <a th:href="@{cities/form}">Search</a>
+        </div>
+
+</body>
+
+    </div>
+
+</html>
