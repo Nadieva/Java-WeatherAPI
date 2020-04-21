@@ -12,6 +12,8 @@ import org.springframework.stereotype.Service;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.WebTarget;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -31,8 +33,8 @@ public class WeatherProviderService {
     private String open_provider_name = "OPEN WEATHER MAP";
 
     //Accu weather API
-    private String AccuWeather_apiKey = "Idv0ATJGgFozkNciqNhRE2f65AJUJHk";
-    private String AccuWeather_baseUrlToGetCityId = "https://dataservice.accuweather.com/locations/v1/cities/search?apiKey=" + AccuWeather_apiKey + "&q=";
+    private String AccuWeather_apiKey = "MIdv0ATJGgFozkNciqNhRE2f65AJUJHk";
+    private String AccuWeather_baseUrlToGetCityKey= "https://dataservice.accuweather.com/locations/v1/cities/search?apikey="+ AccuWeather_apiKey + "&q=";
     private String AccuWeater_baseUrlToGetWeatherData = "http://dataservice.accuweather.com/currentconditions/v1/";
     private String accu_provider_name = "ACCU WEATHER";
 
@@ -43,15 +45,22 @@ public class WeatherProviderService {
     public List<WeatherProvider> getAllWeatherForecastsByCityAndCountry(String cityName, String country) {
             deleteAllProviders();
             List<WeatherProvider> list=new ArrayList<>();
-            addWeatherForecastIntoDatabase(cityName, country);
+            addWeatherForecastIntoRepository(cityName, country);
+         /*   for (WeatherProvider wp: forecasts.findAll().){
+                if(wp.getCity().equalsIgnoreCase(cityName) && wp.getCountry().equalsIgnoreCase(country)){
+                    list.add(wp);
+                }
+            }
+            System.out.println(list);*/
             forecasts.findAll().forEach(list::add);
             return list;
 
     }
 
+
     public WeatherProvider updateWeatherProvider(WeatherProvider w) {
         WeatherProvider latestForecast = new WeatherProvider();
-        Duration timeDifference = Duration.between(w.getLastUpdated(), LocalDateTime.now());
+        Duration timeDifference = Duration.between(w.getLastUpdatedDateTime(), LocalDateTime.now());
 
         //Open API - update weather forecast data if not updated for more than 1 hour
         if (w.getProviderName().equalsIgnoreCase(open_provider_name) && timeDifference.toHours() > 1) {
@@ -72,14 +81,14 @@ public class WeatherProviderService {
         return w;
     }
 
-    public void addWeatherForecastIntoDatabase(String cityName, String country) {
+    public void addWeatherForecastIntoRepository(String cityName, String country) {
 
         if (forecasts.count() == 0) {
             WeatherProvider wp = findWeatherForecastByCityAndCountryFromOpenAPI(cityName, country);
             forecasts.save(wp);
             //Accu API issue
-            //wp = findWeatherForecastByCityAndCountryFromAccuAPI(cityName, country);
-            //forecasts.save(wp);
+            wp = findWeatherForecastByCityAndCountryFromAccuAPI(cityName, country);
+            forecasts.save(wp);
 
         } else {
             for (WeatherProvider w : forecasts.findAll()) {
@@ -95,64 +104,65 @@ public class WeatherProviderService {
 
     public WeatherProvider findWeatherForecastByCityAndCountryFromOpenAPI(String city, String country) {
         try {
-            //open weather map
+            //open weather API  URL
             System.out.println("----------------OPEN WEATHER MAP--------------------");
             String request = city + "," + country;
-            Client client_ow = ClientBuilder.newClient();
-            String uri_ow = OpenWeather_baseUrl + request;
-            WebTarget target_ow = client_ow.target(uri_ow);
-            String response_ow = target_ow.request(String.valueOf(MediaType.APPLICATION_JSON)).get(String.class);
-            JSONObject jsonObject_ow = new JSONObject(response_ow);
+            Client client_openApi = ClientBuilder.newClient();
+            String uri_openApi = OpenWeather_baseUrl + URLEncoder.encode(request, "UTF-8");
+            WebTarget web_target_openApi = client_openApi.target(uri_openApi);
+            String response_openApi = web_target_openApi.request(String.valueOf(MediaType.APPLICATION_JSON)).get(String.class);
+            JSONObject jsonObject_openApi= new JSONObject(response_openApi);
 
             //temperature
-            JSONObject mainJSONObject_ow = jsonObject_ow.getJSONObject("main");
-            double tempKelvin = mainJSONObject_ow.getInt("temp");//getJSONNumber is not working //286.1 becomes 286.0?
+            JSONObject mainJSONObject_openApi = jsonObject_openApi.getJSONObject("main");
+            double tempKelvin = mainJSONObject_openApi.getInt("temp");
             double tempCelsius = Math.round((tempKelvin - 273.15));
-            //double tempFahrenheit = Math.round((tempKelvin - 32) * 5 / 9);
-            //System.out.println("Temperature in " + city + "(" + country + ") :" + String.valueOf(tempFahrenheit) + "°F/" + String.valueOf(tempCelsius) + "°C");
-            double minTempKelvin = mainJSONObject_ow.getInt("temp_min");
+            double tempFahrenheit = Math.round(((tempKelvin - 273.15)* (9 / 5))+32);
+            System.out.println("Temperature in " + city + "(" + country + ") :" + String.valueOf(tempFahrenheit) + "°F/" + String.valueOf(tempCelsius) + "°C");
+            double minTempKelvin = mainJSONObject_openApi.getInt("temp_min");
             double minTempCelsius = Math.round((minTempKelvin - 273.15));
-            double maxTempKelvin = mainJSONObject_ow.getInt("temp_max");
+            double minTempFahrenheit = Math.round(((minTempKelvin - 273.15) * (9 / 5))+32);
+            System.out.println("Min temperature in " + city + "(" + country + ") :" + String.valueOf(minTempFahrenheit) + "°F/" + String.valueOf(minTempCelsius) + "°C");
+            double maxTempKelvin = mainJSONObject_openApi.getInt("temp_max");
             double maxTempCelsius = Math.round((maxTempKelvin - 273.15));
+            double maxTempFahrenheit = Math.round(((maxTempKelvin - 273.15) * (9 / 5))+32);
+            System.out.println("Max temperature in " + city + "(" + country + ") :" + String.valueOf(maxTempFahrenheit) + "°F/" + String.valueOf(maxTempCelsius) + "°C");
 
             //description
-            JSONArray weatherJSONObjectArray = jsonObject_ow.getJSONArray("weather");
+            JSONArray weatherJSONObjectArray = jsonObject_openApi.getJSONArray("weather");
             JSONObject weatherJSONObject = weatherJSONObjectArray.getJSONObject(0);
             String description = weatherJSONObject.getString("main") + " - " +
                     weatherJSONObject.getString("description");
             System.out.println("Description :" + description);
 
             //visibility
-            double visibility = jsonObject_ow.getInt("visibility");
+            double visibility = jsonObject_openApi.getInt("visibility");
+            System.out.println("Visibility (m) :" + visibility);
 
             //humidity
-            double humidity = mainJSONObject_ow.getInt("humidity");
+            double humidity = mainJSONObject_openApi.getInt("humidity");
             System.out.println("Humidity (%) :" + humidity);
 
             //pressure
-            double pressure = mainJSONObject_ow.getInt("pressure");
-            System.out.println("Pressure:" + pressure);
+            double pressure = mainJSONObject_openApi.getInt("pressure");
+            System.out.println("Pressure (hPa):" + pressure);
 
             //Wind
-            //double windDegree = jsonObject_ow.getJSONObject("wind").getInt("deg");
-            //  System.out.println("Wind degree:" + windDegree);
-            double windSpeed = jsonObject_ow.getJSONObject("wind").getInt("speed");
+            double windDegree = jsonObject_openApi.getJSONObject("wind").getInt("deg");
+            System.out.println("Wind degree:" + windDegree);
+            double windSpeed = jsonObject_openApi.getJSONObject("wind").getInt("speed");
             System.out.println("Wind speed (m/s) :" + windSpeed);
 
 
             //cloudiness
-            double cloudiness = jsonObject_ow.getJSONObject("clouds").getInt("all");
+            double cloudiness = jsonObject_openApi.getJSONObject("clouds").getInt("all");
             System.out.println("Cloudiness (%) :" + cloudiness);
 
-            //subcountry
-            //String subCountry = cityservice.getCity(city, country).getSubCountry();
-
-            System.out.println("JSON response: " + response_ow);
+            System.out.println("JSON response: " + response_openApi);
 
             WeatherProvider wp = WeatherProvider.builder()
                     .providerName(open_provider_name)
                     .city(city)
-                    //.subCountry(subCountry)
                     .country(country)
                     .summary(description)
                     .weatherDate(LocalDate.now())
@@ -160,17 +170,19 @@ public class WeatherProviderService {
                     .tempAverageInCelsius(String.valueOf(tempCelsius))
                     .minTemperatureInCelsius(String.valueOf(minTempCelsius))
                     .maxTemperatureInCelsius(String.valueOf(maxTempCelsius))
+                    .tempAverageInFahrenheit(String.valueOf(tempFahrenheit))
+                    .minTemperatureInFahrenheit(String.valueOf(minTempFahrenheit))
+                    .maxTemperatureInFahrenheit(String.valueOf(maxTempFahrenheit))
                     .humidity(String.valueOf(humidity))
                     .pressure(String.valueOf(pressure))
-                    .visibility(String.valueOf(visibility))
+                    .visibility(String.valueOf(visibility/1000))
                     .cloudiness(String.valueOf(cloudiness))
-                    //.windDegree(String.valueOf(windDegree))
-                    .windSpeed(String.valueOf(windSpeed))
-                    .lastUpdated(LocalDateTime.now())
+                    .windDegree(String.valueOf(windDegree))
+                    .windSpeed(String.valueOf(windSpeed*3.6))
+                    .lastUpdatedDateTime(LocalDateTime.now())
                     .build();
-            System.out.println("\n\nweather provider : " + wp.toString());
             return wp;
-        } catch (JSONException e) {
+        } catch (JSONException | UnsupportedEncodingException e) {
             e.printStackTrace();
         }
         return null;
@@ -179,87 +191,82 @@ public class WeatherProviderService {
 
     public WeatherProvider findWeatherForecastByCityAndCountryFromAccuAPI(String city, String country) {
         try {
-            //accuweather
+            //accuweather API  URLs
             System.out.println("\n\n-------------------ACCU WEATHER------------------------");
             String request = city + "," + country;
-            //we know the weather of the city only if we know its key
-            //Please get key of the city to know the weather in the city
-            Client client_aw = ClientBuilder.newClient();
-            String key_aw_uri = AccuWeather_baseUrlToGetCityId + request + "&language=en-us&details=true";
-            WebTarget key_aw_target = client_aw.target(key_aw_uri);
-            String key_response_aw = key_aw_target.request(String.valueOf(MediaType.APPLICATION_JSON)).get(String.class);
-            JSONArray jsonArray = new JSONArray(key_response_aw);//this is a JSON array
-            JSONObject jsonArrayObject = jsonArray.getJSONObject(0);
-            String city_key = jsonArrayObject.getString("Key");
-            String uri_aw = AccuWeater_baseUrlToGetWeatherData + city_key + "?apikey=" + AccuWeather_apiKey + "&language=en-us&details=true";
-            WebTarget target_aw = client_aw.target(uri_aw);
-            String response_aw = target_aw.request(String.valueOf(MediaType.APPLICATION_JSON)).get(String.class);
-            JSONArray jsonArrayObject_aw = new JSONArray(response_aw);
 
-            //local date time
-            String datetime = jsonArrayObject_aw.getJSONObject(0).getString("LocalObservationDateTime");
-            System.out.println("Local date and time in " + city + "(" + country + "): " + datetime);
+            Client client_AccuAPI= ClientBuilder.newClient();
+            String uriToGetCityKey_AccuAPI =AccuWeather_baseUrlToGetCityKey + URLEncoder.encode(request, "UTF-8") + "&language=en-us&details=true";
+            WebTarget web_target_AccuAPI = client_AccuAPI.target(uriToGetCityKey_AccuAPI);
+            String key_response_AccuAPI = web_target_AccuAPI.request(String.valueOf(MediaType.APPLICATION_JSON)).get(String.class);
+
+            JSONArray jsonArray = new JSONArray(key_response_AccuAPI);
+            JSONObject jsonArrayObject = jsonArray.getJSONObject(0);
+            String cityKey = jsonArrayObject.getString("Key");
+            String uriToGetWeatherData_AccuAPI = AccuWeater_baseUrlToGetWeatherData + cityKey+ "?apikey=" + AccuWeather_apiKey + "&language=en-us&details=true";
+
+            WebTarget target_AccuAPI = client_AccuAPI.target(uriToGetWeatherData_AccuAPI);
+            String response_AccuAPI= target_AccuAPI.request(String.valueOf(MediaType.APPLICATION_JSON)).get(String.class);
+            JSONArray jsonArrayObject_AccuAPI= new JSONArray(response_AccuAPI);
 
             //temperature
-            JSONObject tempJSONObject = jsonArrayObject_aw.getJSONObject(0).getJSONObject("Temperature");
+            JSONObject tempJSONObject = jsonArrayObject_AccuAPI.getJSONObject(0).getJSONObject("Temperature");
             double tempCelsius = tempJSONObject.getJSONObject("Metric").getInt("Value");
             double tempFahrenheit = tempJSONObject.getJSONObject("Imperial").getInt("Value");
             System.out.println("Temperature in " + city + "(" + country + ") :" + tempFahrenheit + "°F/" + tempCelsius + "°C");
 
             //description
-            String description = jsonArrayObject_aw.getJSONObject(0).getString("WeatherText");
+            String description = jsonArrayObject_AccuAPI.getJSONObject(0).getString("WeatherText");
             System.out.println("Description :" + description);
 
             //UV index
-            double uvIndex = jsonArrayObject_aw.getJSONObject(0).getInt("UVIndex");
+            double uvIndex = jsonArrayObject_AccuAPI.getJSONObject(0).getInt("UVIndex");
             System.out.println("UV index :" + uvIndex);
 
             //humidity
-            double humidity = jsonArrayObject_aw.getJSONObject(0).getInt("RelativeHumidity");
+            double humidity = jsonArrayObject_AccuAPI.getJSONObject(0).getInt("RelativeHumidity");
             System.out.println("Humidity (%) :" + humidity);
 
             //Wind
-            double windDegree = jsonArrayObject_aw.getJSONObject(0).getJSONObject("Wind").getJSONObject("Direction").getInt("Degrees");
+            double windDegree = jsonArrayObject_AccuAPI.getJSONObject(0).getJSONObject("Wind").getJSONObject("Direction").getInt("Degrees");
             System.out.println("Wind degree :" + windDegree);
 
-            double windSpeed = jsonArrayObject_aw.getJSONObject(0).getJSONObject("Wind").getJSONObject("Speed").getJSONObject("Metric").getInt("Value");
+            double windSpeed = jsonArrayObject_AccuAPI.getJSONObject(0).getJSONObject("Wind").getJSONObject("Speed").getJSONObject("Metric").getInt("Value");
             System.out.println("Wind speed (km/h) :" + windSpeed);
 
             //cloudiness
-            double cloudiness = jsonArrayObject_aw.getJSONObject(0).getInt("CloudCover");
+            double cloudiness = jsonArrayObject_AccuAPI.getJSONObject(0).getInt("CloudCover");
             System.out.println("Cloudiness (%) :" + cloudiness);
 
             //visibility
-            double visibility = jsonArrayObject_aw.getJSONObject(0).getJSONObject("Visibility").getJSONObject("Metric").getInt("Value");
+            double visibility = jsonArrayObject_AccuAPI.getJSONObject(0).getJSONObject("Visibility").getJSONObject("Metric").getInt("Value");
             System.out.println("Visibility (km) :" + visibility);
 
             //pressure
-            double pressure = jsonArrayObject_aw.getJSONObject(0).getJSONObject("Visibility").getJSONObject("Metric").getInt("Value");
-            System.out.println("Pressure (mb) :" + pressure);
+            double pressure = jsonArrayObject_AccuAPI.getJSONObject(0).getJSONObject("Visibility").getJSONObject("Metric").getInt("Value");
+            System.out.println("Pressure (hPa) :" + pressure);
 
-            System.out.println("JSON response: " + jsonArrayObject_aw.getJSONObject(0).toString());
+            System.out.println("JSON response: " + jsonArrayObject_AccuAPI.getJSONObject(0).toString());
             WeatherProvider wp = WeatherProvider.builder()
                     .providerName(accu_provider_name)
                     .city(city)
-                    //.subCountry()
                     .country(country)
                     .summary(description)
                     .weatherDate(LocalDate.now())
                     .weatherTime(LocalTime.now())
                     .tempAverageInCelsius(String.valueOf(tempCelsius))
-                    //.minTemperatureInCelsius()
-                    // .maxTemperatureInCelsius()
+                    .tempAverageInFahrenheit(String.valueOf(tempFahrenheit))
                     .humidity(String.valueOf(humidity))
                     .pressure(String.valueOf(pressure))
-                    .visibility(String.valueOf(cloudiness))
+                    .visibility(String.valueOf(visibility))
                     .cloudiness(String.valueOf(cloudiness))
                     .windDegree(String.valueOf(windDegree))
                     .windSpeed(String.valueOf(windSpeed))
-                    .lastUpdated(LocalDateTime.now())
+                    .uvIndex(String.valueOf(uvIndex))
+                    .lastUpdatedDateTime(LocalDateTime.now())
                     .build();
-
             return wp;
-        } catch (JSONException e) {
+        } catch (JSONException | UnsupportedEncodingException e) {
             e.printStackTrace();
         }
         return null;
@@ -268,12 +275,7 @@ public class WeatherProviderService {
     public WeatherProvider getProviderById(Long id) {
         return forecasts.findById(id).get();
     }
-
-    public void deleteProviderById(Long id) {
-        forecasts.deleteById(id);
-    }
-
-    public void deleteAllProviders() {
+    public void deleteAllProviders(){
         forecasts.deleteAll();
     }
 }

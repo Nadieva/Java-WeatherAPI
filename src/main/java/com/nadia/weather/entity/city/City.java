@@ -5,10 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
+import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
 
 @Data
@@ -18,13 +15,11 @@ import javax.validation.constraints.NotBlank;
 @Entity // This tells Hibernate to make a table out of this class
 public class City {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy= GenerationType.AUTO)
     private Long id;
     @Column(name="city_name")
     @NotBlank(message = "City name is mandatory")
     private String cityName;
-    @Column(name="region")
-    private String subCountry;
     @Column(name="country")
     @NotBlank(message = "Country name is mandatory")
     private String country;

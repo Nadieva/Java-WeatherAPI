@@ -5,10 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
+import javax.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -17,36 +14,43 @@ import java.time.LocalTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@Entity // This tells Hibernate to make a table out of this class
+@Entity
 public class WeatherProvider {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy= GenerationType.AUTO)
     private Long id;
-    @Column(name="forecast_date")
+    @Column(name = "forecast_date")
     private LocalDate weatherDate;
-    @Column(name="forecast_time")
+    @Column(name = "forecast_time")
     private LocalTime weatherTime;
     private String city;
-    @Column(name="region")
-    private String subCountry;
     private String country;
-    @Column(name="provider_name")
+    @Column(name = "provider_name")
     private String providerName;
     private String summary;
-    @Column(name="temperature")
+    @Column(name = "average_temperature_celsius")
     private String tempAverageInCelsius;
-    @Column(name="min_temperature")
+    @Column(name = "min_temperature_celsius")
     private String minTemperatureInCelsius;
-    @Column(name="max_temperature")
+    @Column(name = "max_temperature_celsius")
     private String maxTemperatureInCelsius;
+    @Column(name = "average_temperature_fahrenheit")
+    private String tempAverageInFahrenheit;
+    @Column(name = "min_temperature_fahrenheit")
+    private String minTemperatureInFahrenheit;
+    @Column(name = "max_temperature_fahrenheit")
+    private String maxTemperatureInFahrenheit;
     private String humidity;
     private String pressure;
     private String visibility;
     private String cloudiness;
-    @Column(name="wind_speed")
+    @Column(name = "wind_speed")
     private String windSpeed;
-    @Column(name="wind_degree")
+    @Column(name = "wind_degree")
     private String windDegree;
-    @Column(name="last_datetime_updated")
-    private LocalDateTime lastUpdated;
+    @Column(name = "uv_index")
+    private String uvIndex;
+
+    @Column(name = "last_datetime_updated")
+    private LocalDateTime lastUpdatedDateTime;
 }
