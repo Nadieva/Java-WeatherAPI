@@ -29,7 +29,7 @@ public class WeatherDBConfiguration {
 
     @Primary
     @Bean
-    @ConfigurationProperties(prefix = "spring.datasource")
+    @ConfigurationProperties(prefix = "spring.datasource.db2")
     public DataSourceProperties weatherDSProperties() {
         return new DataSourceProperties();
     }

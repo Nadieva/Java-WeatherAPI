@@ -28,7 +28,7 @@ public class CityDBConfiguration {
     private Environment env;
 
     @Bean
-    @ConfigurationProperties(prefix="spring.datasource2")
+    @ConfigurationProperties(prefix="spring.datasource.db2")
     public DataSourceProperties cityDSProperties(){
         return new DataSourceProperties();
     }

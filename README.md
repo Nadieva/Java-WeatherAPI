@@ -1,6 +1,6 @@
 # Java-WeatherAPI
 
-User enters city and country to display the weather forecasts of the requested location. User can read and compare data from different weather providers(APIs).
+User enters city and country (in English) to display the weather forecasts of the requested location. User can read and compare data from different weather providers(APIs).
 
 Please note that I might update this project when the Apis are updated.
 
@@ -22,3 +22,8 @@ Please note that I might update this project when the Apis are updated.
   - update/create city: http://localhost:8080/cities?city=Madrid&country=Spain
   - delete a provider with id#5: http://localhost:8080/providers/5
   - delete a city with id#1: http://localhost:8080/cities/1
+
+**Note: You can also create the databases with its account and open the folder in a terminal to type:
+- mvn package
+- mvn spring-boot:run or java -jar target/*.jar
+After that, you go to localhost:8080 to see the web app.

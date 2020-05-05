@@ -51,7 +51,7 @@ For more information about the weather providers, click on their name:
                     <td><span th:text="${forecast.summary}"></span></td>
                     <td><span th:text="${forecast.tempAverageInCelsius}+'°C'"></span> <br/>
                         <span th:text="${forecast.minTemperatureInCelsius != null} ? 'Min:'+${forecast.minTemperatureInCelsius} +'°C '"></span>
-                        <span th:text="${forecast.maxTemperatureInCelsius != null } ? 'Max:'+ ${forecast.maxTemperatureInCelsius}+'°C'"></span><br/>
+                        <span th:text="${forecast.maxTemperatureInCelsius != null } ? 'Max:'+ ${forecast.maxTemperatureInCelsius}+'°C '"></span><br/>
                         <span th:text="${forecast.tempAverageInFahrenheit}+'°F'"></span><br/>
                         <span th:text="${forecast.minTemperatureInFahrenheit != null} ? 'Min:'+${forecast.minTemperatureInFahrenheit} +'F '"></span>
                         <span th:text="${forecast.maxTemperatureInFahrenheit != null} ? 'Max:'+ ${forecast.maxTemperatureInFahrenheit}+'F '"></span>
@@ -62,7 +62,7 @@ For more information about the weather providers, click on their name:
                     <td><span th:text="${forecast.cloudiness}+'%'"></span></td>
                     <td>
                         <span th:text="${forecast.windSpeed != null} ? 'Speed:'+${forecast.windSpeed} +'km/h'"></span><br/>
-                        <span th:text="${forecast.windDegree != null} ? 'Degree:'+${forecast.windSpeed}"></span>
+                        <span th:text="${forecast.windDegree != null} ? 'Degree:'+${forecast.windSpeed} "></span>
                     </td>
                     <td>
                         <span th:text="${forecast.uvIndex != null} ? ${forecast.windSpeed}"></span>
